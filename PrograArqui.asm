@@ -16,7 +16,7 @@ datasg segment 'data'
     x2 DB 0
     y2 DB 0
     limiteUP DB 6
-    limiteDOWN DB 24 
+    limiteDOWN DB 23 
     limiteLEFT DB 10
     limiteRIGHT DB 60
     left    equ     75
@@ -77,7 +77,6 @@ START:
    
    
 ;GAMELOOP:
-
    
    
    mov cx,8 ; esto es para el loop de la barra...
@@ -105,6 +104,7 @@ IMPRIMIRBARRA:
    
    dec posbarx ; pos actual del cursor barra
    
+   jmp MOVERUP
    
 PEDIRTECLA: 
    
@@ -112,11 +112,11 @@ PEDIRTECLA:
    int  16h 
    
    cmp ah, left
-   je MOVERBARRAIZQ
+   jmp MOVERBARRAIZQ
    
    cmp ah, right
-   je MOVERBARRADER
-   
+   jmp MOVERBARRADER
+  
    
 MOVERBARRAIZQ: 
 
@@ -124,7 +124,7 @@ MOVERBARRAIZQ:
    
    mov bl,finbar
    cmp bl,limiteLEFT
-   je PEDIRTECLA
+   jmp PEDIRTECLA
    
    mov dl,posbarx
    mov dh,posbary     
@@ -156,8 +156,9 @@ MOVERBARRAIZQ:
    dec posbarx 
      
    popa
+
    
-   jmp PEDIRTECLA
+
    
 MOVERBARRADER:
 
@@ -198,9 +199,9 @@ MOVERBARRADER:
      
    popa
        
-   jmp PEDIRTECLA
 
 MOVERUP:
+    
    mov dl,x
    mov dh,y     
    mov ah,02h
@@ -236,12 +237,18 @@ MOVERDOWN:
    mov dl, 32
    int 21h
    
-   inc y 
+   inc y
    
    mov dl,x
    mov dh,y     
    mov ah,02h
+   int 10h 
+   
+   mov ah,08h
    int 10h
+   
+   cmp al,barrita
+   je RETURNUP
    
    mov ah, 2         				
    mov dl, caracter
@@ -249,10 +256,14 @@ MOVERDOWN:
     
    mov bl,limiteDOWN
    cmp y,bl
-   je MOVERUP    
+   je MOVERUP     
+   
    jmp MOVERDOWN 
    
-   
+RETURNUP:
+   dec y 
+   jmp MOVERUP      
+         
 MOVERUP2:
    mov dl,x
    mov dh,y     
