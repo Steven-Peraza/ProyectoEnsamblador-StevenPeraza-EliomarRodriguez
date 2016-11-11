@@ -92,7 +92,7 @@ IMPRIMIRBARRA:
    
    mov     al, barrita
    mov     ah, 09h
-   mov     bl, 0eh ; attribute.
+   mov     bl, 0ah ; attribute.
    mov     cx, 1   ; single char.
    int     10h 
       
@@ -106,16 +106,18 @@ IMPRIMIRBARRA:
    
    jmp MOVERUP
    
-PEDIRTECLA: 
-   
+PEDIRTECLA:
+    
    mov  ah,00h
    int  16h 
    
-   cmp ah, left
-   jmp MOVERBARRAIZQ
-   
    cmp ah, right
-   jmp MOVERBARRADER
+   je MOVERBARRADER
+   
+   cmp ah, left
+   je MOVERBARRAIZQ
+   
+   jmp PEDIRTECLA
   
    
 MOVERBARRAIZQ: 
@@ -124,7 +126,7 @@ MOVERBARRAIZQ:
    
    mov bl,finbar
    cmp bl,limiteLEFT
-   jmp PEDIRTECLA
+   je PEDIRTECLA
    
    mov dl,posbarx
    mov dh,posbary     
@@ -156,7 +158,7 @@ MOVERBARRAIZQ:
    dec posbarx 
      
    popa
-
+   jmp PEDIRTECLA
    
 
    
@@ -198,7 +200,7 @@ MOVERBARRADER:
    int     10h 
      
    popa
-       
+   jmp PEDIRTECLA    
 
 MOVERUP:
     
@@ -212,6 +214,7 @@ MOVERUP:
    int 21h
    
    dec y
+   inc x
    
    mov dl,x
    mov dh,y     
@@ -220,11 +223,17 @@ MOVERUP:
    
    mov ah, 2         				
    mov dl, caracter
-   int 21h
+   int 21h 
+   
+   mov bl,limiteRIGHT
+   cmp x,bl
+   je MOVERUP2
    
    mov bl,limiteUP
    cmp y,bl
-   je MOVERDOWN    
+   je MOVERDOWN2
+   
+       
    jmp MOVERUP
 
 MOVERDOWN:
@@ -238,6 +247,7 @@ MOVERDOWN:
    int 21h
    
    inc y
+   dec x
    
    mov dl,x
    mov dh,y     
@@ -256,7 +266,12 @@ MOVERDOWN:
     
    mov bl,limiteDOWN
    cmp y,bl
-   je MOVERUP     
+   je MOVERUP2
+   
+   mov bl,limiteLEFT
+   cmp x,bl
+   je MOVERDOWN2
+        
    
    jmp MOVERDOWN 
    
@@ -275,6 +290,7 @@ MOVERUP2:
    int 21h
    
    dec y
+   dec x
    
    mov dl,x
    mov dh,y     
@@ -287,7 +303,13 @@ MOVERUP2:
    
    mov bl,limiteUP
    cmp y,bl
-   je MOVERDOWN2    
+   je MOVERDOWN
+   
+   mov bl,limiteLEFT
+   cmp x,bl
+   je MOVERUP
+   
+       
    jmp MOVERUP2
 
 MOVERDOWN2:
@@ -300,20 +322,29 @@ MOVERDOWN2:
    mov dl, 32
    int 21h
    
-   inc y 
+   inc y
+   inc x 
    
    mov dl,x
    mov dh,y     
    mov ah,02h
    int 10h
-   
+          
+   cmp al,barrita
+   je RETURNUP
+          
    mov ah, 2         				
    mov dl, caracter
    int 21h
     
    mov bl,limiteDOWN
    cmp y,bl  
-   je MOVERUP2    
+   je MOVERUP
+   
+   mov bl,limiteRIGHT
+   cmp x,bl
+   je MOVERDOWN
+       
    jmp MOVERDOWN2
    
 
