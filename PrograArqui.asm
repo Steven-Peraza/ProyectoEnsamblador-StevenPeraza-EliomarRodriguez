@@ -1,3 +1,5 @@
+include "emu8086.inc"
+
 stacksg segment para stack 'stack'      
 stacksg ends
 ;---------------------------------
@@ -8,26 +10,27 @@ datasg segment 'data'
     textoVidas DB 9,9,"Vidas: ","$"                                   
     textoGO    DB "Game Over! Su puntuacion fue de: ","$"
     lifes      DB 3,"$"
-    score      DB 0,"$"
+    score      DW 0,"$"
     nombre DB 10,?,10 dup (?),"$"
     caracter DB 0 
     barrita DB 219
     finbar  DB ? 
-    posbarx DB 40
+    posbarx DB 30
     posbary DB 22
     posbloqx DB 22
     posbloqy DB 7
     posbloqx2 DB 22
     posbloqy2 DB 7
     bloque  DB 178
+    bounce  DB 0,"$"
     x DB 40
     y DB 20 
     x2 DB 40
     y2 DB 21
     limiteUP DB 6
     limiteDOWN DB 23 
-    limiteLEFT DB 20
-    limiteRIGHT DB 60
+    limiteLEFT DB 17
+    limiteRIGHT DB 41
     left    equ     75
     right   equ     77
     up      equ     80
@@ -332,6 +335,9 @@ IMPRIMIRBARRA:
    
    dec posbarx ; pos actual del cursor barra
    
+   mov  ah,00h
+   int  16h
+   
    jmp MOVERUP
    
    
@@ -454,12 +460,16 @@ MOVERUP:
    mov ah,08h
    int 10h
    
-   cmp al,bloque
-   je BORRARBLOQUE
+   mov bounce,1
    
-   mov ah, 2         				
-   mov dl, caracter
-   int 21h 
+   cmp al,bloque
+   je REBOTE
+   
+   mov     al, caracter
+   mov     ah, 09h
+   mov     bl, 0fh ; attribute.
+   mov     cx, 1   ; single char.
+   int     10h 
    
    mov bl,limiteRIGHT
    cmp x,bl
@@ -491,17 +501,21 @@ MOVERDOWN:
    int 10h 
    
    mov ah,08h
-   int 10h
+   int 10h 
+   
+   mov bounce,2
    
    cmp al,bloque
-   je BORRARBLOQUE
+   je REBOTE
    
    cmp al,barrita
    je RETURNUP2
    
-   mov ah, 2         				
-   mov dl, caracter
-   int 21h
+   mov     al, caracter
+   mov     ah, 09h
+   mov     bl, 0fh ; attribute.
+   mov     cx, 1   ; single char.
+   int     10h 
     
    mov bl,limiteDOWN
    cmp y,bl
@@ -541,14 +555,18 @@ MOVERUP2:
    int 10h
    
    mov ah,08h
-   int 10h
+   int 10h 
+   
+   mov bounce,3
    
    cmp al,bloque
-   je BORRARBLOQUE
+   je REBOTE
    
-   mov ah, 2         				
-   mov dl, caracter
-   int 21h
+   mov     al, caracter
+   mov     ah, 09h
+   mov     bl, 0fh ; attribute.
+   mov     cx, 1   ; single char.
+   int     10h 
    
    mov bl,limiteUP
    cmp y,bl
@@ -580,17 +598,21 @@ MOVERDOWN2:
    int 10h
    
    mov ah,08h
-   int 10h
+   int 10h 
+   
+   mov bounce,4
    
    cmp al,bloque
-   je BORRARBLOQUE
+   je REBOTE
           
    cmp al,barrita
    je RETURNUP
           
-   mov ah, 2         				
-   mov dl, caracter
-   int 21h
+   mov     al, caracter
+   mov     ah, 09h
+   mov     bl, 0fh ; attribute.
+   mov     cx, 1   ; single char.
+   int     10h 
     
    mov bl,limiteDOWN
    cmp y,bl  
@@ -613,11 +635,62 @@ PERDERVIDA:
    
    jmp RESET
    
+
+REBOTE:
    
-BORRARBLOQUE:
+   call BORRARBLOQUE
    
-   jmp GAMEOVER 
-     
+   cmp bounce,1
+   je MOVERUP
+   
+   cmp bounce,2
+   je MOVERUP2
+             
+   cmp bounce,3
+   je MOVERDOWN
+   
+   cmp bounce,4
+   je MOVERDOWN2
+   
+   
+   
+   
+BORRARBLOQUE proc
+
+   mov ah, 2         				
+   mov dl, 32
+   int 21h
+   
+   inc x
+
+   mov dl,x
+   mov dh,y     
+   mov ah,02h
+   int 10h
+   
+   mov ah, 2         				
+   mov dl, 32
+   int 21h
+   
+   dec x
+   dec x
+   
+   mov dl,x
+   mov dh,y     
+   mov ah,02h
+   int 10h
+   
+   mov ah, 2         				
+   mov dl, 32
+   int 21h
+   
+   xor ax,ax
+   mov al,score
+   add al,5
+   mov score,al
+   
+   ret 
+endp BORRARBLOQUE     
     
 
 RESET:
@@ -680,17 +753,20 @@ GAMEOVER:
    lea dx, textoGO         				
    int 21h 
    
-   xor dx,dx       
-   mov dl,score
-   add dl,48
+          
+   mov al,score
+   call PRINT_NUM
 
-   mov ah,02h
+   mov ax,02h
    int 21h
    
    mov ax,4c00h
    int 21h 
 
    
+
+DEFINE_PRINT_NUM
+DEFINE_PRINT_NUM_UNS
    
 codesg ends
 end start
