@@ -686,7 +686,7 @@ BORRARBLOQUE proc
    
    xor ax,ax
    mov al,score
-   add al,5
+   add al,25
    mov score,al
    
    ret 
@@ -753,7 +753,7 @@ GAMEOVER:
    lea dx, textoGO         				
    int 21h 
    
-          
+   xor ax,ax       
    mov al,score
    call PRINT_NUM
 
