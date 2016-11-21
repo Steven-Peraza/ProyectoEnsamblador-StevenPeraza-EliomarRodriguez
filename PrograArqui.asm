@@ -7,32 +7,42 @@ datasg segment 'data'
     textoNom   DB "Digite su nombre o apodo.",10,13, "$" 
     textoCar   DB 10,13,"Digite el caracter que desea observar.",10,13, "$"
     textoJug   DB 10,13,"Jugador: ","$"
-    textoVidas DB 9,9,"Vidas: ","$"                                   
+    textoVidas DB 9,9,"Vidas: ","$"
+    textoScore DB 9,9,"Score: ","$"                                   
     textoGO    DB "Game Over! Su puntuacion fue de: ","$"
+    textoDif   DB 10,13, "Digite la dificultad en la que desea jugar (Facil por Default).","$"
+    textEasy   DB 10,13, "1. Facil","$"
+    textMed    DB 10,13, "2. Medio","$"
+    textHard   DB 10,13, "3. Dificil",10,13,"$"
+    difi       DB 0
     lifes      DB 3,"$"
     score      DW 0,"$"
     nombre DB 10,?,10 dup (?),"$"
     caracter DB 0 
     barrita DB 219
+    tambar  DB ?
     finbar  DB ? 
-    posbarx DB 30
+    posbarx DB ?
     posbary DB 22
+    posbarx2 DB ?
+    posbary2 DB 22
     posbloqx DB 22
     posbloqy DB 7
     posbloqx2 DB 22
     posbloqy2 DB 7
-    bloque  DB 178
-    bounce  DB 0,"$"
-    x DB 40
-    y DB 20 
-    x2 DB 40
-    y2 DB 21
-    limiteUP DB 6
-    limiteDOWN DB 23 
-    limiteLEFT DB 17
-    limiteRIGHT DB 41
-    left    equ     75
-    right   equ     77
+    bloque    DB 178 
+    cantBlox  DB ?
+    bounce    DB 0,"$"
+    x  DB ?
+    y  DB 20 
+    posbolax DB ?
+    posbolay DB 21
+    limiteUP    DB 0
+    limiteDOWN  DB 0 
+    limiteLEFT  DB 0
+    limiteRIGHT DB 0
+    left    equ     4bh
+    right   equ     4dh
     up      equ     80
     down    equ     72         
     datasg ends
@@ -63,6 +73,26 @@ START:
    int 21h
    mov caracter,al
    
+   mov ah, 9      				
+   lea dx, textoDif         				
+   int 21h
+   
+   mov ah, 9      				
+   lea dx, textEasy         				
+   int 21h
+   
+   mov ah, 9      				
+   lea dx, textMed         				
+   int 21h
+   
+   mov ah, 9      				
+   lea dx, textHard         				
+   int 21h
+   
+   mov ah,1
+   int 21h
+   mov difi,al
+   
    pusha
    
    mov ax,0600h   
@@ -71,13 +101,16 @@ START:
    mov dx,184fh   
    int 10h 
    
-   xor ax,ax
-   xor dx,dx
+   popa
+   ;xor ax,ax
+   ;xor dx,dx
    
    mov dl,0
    mov dh,0     
    mov ah,02h
    int 10h
+   
+  ; popa
    
    mov ah, 9      				
    lea dx, textoJug         				
@@ -85,6 +118,22 @@ START:
    
    mov ah, 9      				
    lea dx, nombre         				
+   int 21h 
+   
+   mov dl,30
+   mov dh,1     
+   mov ah,02h
+   int 10h
+   
+   mov ah, 9      				
+   lea dx, textoScore         				
+   int 21h
+    
+   xor dx,dx       
+   mov dl,score
+   add dl,48
+
+   mov ah,02h
    int 21h 
           
    mov dl,50
@@ -103,19 +152,62 @@ START:
    mov ah,02h
    int 21h
    
-   popa 
+   cmp difi,31h
+   je EZ
    
+   cmp difi,32h
+   je MED
    
-;GAMELOOP:
- 
-   mov cx, 3
+   cmp difi,33h
+   je HARD
+   
+    
+   
 
-IMPRIMIRBLOQUES:
+EZ:
+    
+    mov posbarx,28
+    mov posbarx2,28
+    mov x,32
+    mov posbolax,32
+    mov tambar, 8
+    mov limiteUP, 6
+    mov limiteDOWN, 23 
+    mov limiteLEFT, 19
+    mov limiteRIGHT, 43
+    mov cantBlox, 7  
+    jmp GAMEON 
+    
+MED:
+    
+    mov posbarx,32
+    mov posbarx2,32
+    mov x,35
+    mov posbolax,35
+    mov tambar, 6
+    mov limiteUP, 6
+    mov limiteDOWN, 23 
+    mov limiteLEFT, 19
+    mov limiteRIGHT, 50
+    mov cantBlox, 9 
+    jmp GAMEON
+    
+HARD:
+    
+    mov posbarx,36
+    mov posbarx2,36
+    mov x,38
+    mov posbolax,38
+    mov tambar, 4
+    mov limiteUP, 6
+    mov limiteDOWN, 23 
+    mov limiteLEFT, 19
+    mov limiteRIGHT, 54
+    mov cantBlox, 11 
+    jmp GAMEON
+                 
+BLOX proc 
    pusha
-   
-   mov bl,posbloqx2
-   mov posbloqx,bl
-   
    mov dl,posbloqx
    mov dh,posbloqy     
    mov ah,02h
@@ -124,193 +216,38 @@ IMPRIMIRBLOQUES:
    mov     al, bloque
    mov     ah, 09h
    mov     bl, 0ah ; attribute.
-   mov     cx, 1   ; single char.
+   mov     cx, 2   ; single char.
    int     10h
    
-   inc posbloqx
-   
-   mov dl,posbloqx
-   mov dh,posbloqy     
-   mov ah,02h
-   int 10h
-   
-   mov     al, bloque
-   mov     ah, 09h
-   mov     bl, 0ah ; attribute.
-   mov     cx, 1   ; single char.
-   int     10h
-   
-   inc posbloqx
-   inc posbloqx
-   
-   mov dl,posbloqx
-   mov dh,posbloqy     
-   mov ah,02h
-   int 10h
-   
-   mov     al, bloque
-   mov     ah, 09h
-   mov     bl, 0ch ; attribute.
-   mov     cx, 1   ; single char.
-   int     10h
-   
-   inc posbloqx
-   
-   mov dl,posbloqx
-   mov dh,posbloqy     
-   mov ah,02h
-   int 10h
-   
-   mov     al, bloque
-   mov     ah, 09h
-   mov     bl, 0ch ; attribute.
-   mov     cx, 1   ; single char.
-   int     10h
-   
-   inc posbloqx
-   inc posbloqx
-   
-   mov dl,posbloqx
-   mov dh,posbloqy     
-   mov ah,02h
-   int 10h
-   
-   mov     al, bloque
-   mov     ah, 09h
-   mov     bl, 0bh ; attribute.
-   mov     cx, 1   ; single char.
-   int     10h
-   
-   inc posbloqx
-   
-   mov dl,posbloqx
-   mov dh,posbloqy     
-   mov ah,02h
-   int 10h
-   
-   mov     al, bloque
-   mov     ah, 09h
-   mov     bl, 0bh ; attribute.
-   mov     cx, 1   ; single char.
-   int     10h
-   
-   inc posbloqx
-   inc posbloqx
-   
-   mov dl,posbloqx
-   mov dh,posbloqy     
-   mov ah,02h
-   int 10h
-   
-   mov     al, bloque
-   mov     ah, 09h
-   mov     bl, 0eh ; attribute.
-   mov     cx, 1   ; single char.
-   int     10h
-   
-   inc posbloqx
-   
-   mov dl,posbloqx
-   mov dh,posbloqy     
-   mov ah,02h
-   int 10h
-   
-   mov     al, bloque
-   mov     ah, 09h
-   mov     bl, 0eh ; attribute.
-   mov     cx, 1   ; single char.
-   int     10h
-   
-   inc posbloqx
-   inc posbloqx
-   
-   mov dl,posbloqx
-   mov dh,posbloqy     
-   mov ah,02h
-   int 10h
-   
-   mov     al, bloque
-   mov     ah, 09h
-   mov     bl, 0fh ; attribute.
-   mov     cx, 1   ; single char.
-   int     10h
-   
-   inc posbloqx
-   
-   mov dl,posbloqx
-   mov dh,posbloqy     
-   mov ah,02h
-   int 10h
-   
-   mov     al, bloque
-   mov     ah, 09h
-   mov     bl, 0fh ; attribute.
-   mov     cx, 1   ; single char.
-   int     10h
-   
-   inc posbloqx
-   inc posbloqx
-   
-   mov dl,posbloqx
-   mov dh,posbloqy     
-   mov ah,02h
-   int 10h
-   
-   mov     al, bloque
-   mov     ah, 09h
-   mov     bl, 0dh ; attribute.
-   mov     cx, 1   ; single char.
-   int     10h
-   
-   inc posbloqx
-   
-   mov dl,posbloqx
-   mov dh,posbloqy     
-   mov ah,02h
-   int 10h
-   
-   mov     al, bloque
-   mov     ah, 09h
-   mov     bl, 0dh ; attribute.
-   mov     cx, 1   ; single char.
-   int     10h
-   
-   inc posbloqx
-   inc posbloqx
-   
-   mov dl,posbloqx
-   mov dh,posbloqy     
-   mov ah,02h
-   int 10h
-   
-   mov     al, bloque
-   mov     ah, 09h
-   mov     bl, 0ah ; attribute.
-   mov     cx, 1   ; single char.
-   int     10h
-   
-   inc posbloqx
-   
-   mov dl,posbloqx
-   mov dh,posbloqy     
-   mov ah,02h
-   int 10h
-   
-   mov     al, bloque
-   mov     ah, 09h
-   mov     bl, 0ah ; attribute.
-   mov     cx, 1   ; single char.
-   int     10h
+   add posbloqx,3
+   popa
+   ret
+    
+endp BLOX  
+
+
+GAMEON:
+   mov cx, cantBlox   
+   mov bl,posbloqx2
+   mov posbloqx,bl
+    
+IMPRIMIRBLOQUES:
+   call BLOX
+   dec cx
+   jnz IMPRIMIRBLOQUES
+   jmp FILAS  
+
+FILAS: 
+
+   cmp posbloqy,11
+   je IMPRIMIRBARRA
    
    inc posbloqy
    inc posbloqy
-   popa 
    
-   loop IMPRIMIRBLOQUES
-  
+   jmp GAMEON 
    
-   mov cx,8 ; esto es para el loop de la barra...
-   
+     
    
 IMPRIMIRBARRA: 
 
@@ -324,14 +261,12 @@ IMPRIMIRBARRA:
    mov     al, barrita
    mov     ah, 09h
    mov     bl, 0ah ; attribute.
-   mov     cx, 1   ; single char.
+   mov     cx, tambar   ; single char.
    int     10h 
       
    inc posbarx
            
    popa
-   
-   loop IMPRIMIRBARRA
    
    dec posbarx ; pos actual del cursor barra
    
@@ -342,16 +277,18 @@ IMPRIMIRBARRA:
    
    
    
-PEDIRTECLA:
-    
-   mov  ah,00h
+PEDIRTECLA:  
+
+
+   mov  ah,01h
    int  16h 
    
    cmp ah, right
    je MOVERBARRADER
    
    cmp ah, left
-   je MOVERBARRAIZQ
+   je MOVERBARRAIZQ 
+   
    
    jmp PEDIRTECLA
   
@@ -376,7 +313,7 @@ MOVERBARRAIZQ:
    int     10h 
            
    mov al,posbarx
-   sub al, 8
+   sub al, tambar
     
    mov finbar,al
    
@@ -420,7 +357,7 @@ MOVERBARRADER:
    int     10h 
            
    mov al,posbarx
-   sub al,8
+   sub al,tambar
     
    mov finbar,al
    
@@ -641,7 +578,7 @@ REBOTE:
    call BORRARBLOQUE
    
    cmp bounce,1
-   je MOVERUP
+   je MOVERDOWN2
    
    cmp bounce,2
    je MOVERUP2
@@ -650,7 +587,7 @@ REBOTE:
    je MOVERDOWN
    
    cmp bounce,4
-   je MOVERDOWN2
+   je MOVERUP
    
    
    
@@ -686,8 +623,19 @@ BORRARBLOQUE proc
    
    xor ax,ax
    mov al,score
-   add al,25
+   add al,5
    mov score,al
+   
+   mov dl,47
+   mov dh,1     
+   mov ah,02h
+   int 10h
+     
+   pusha
+   xor ax,ax       
+   mov al,score
+   call PRINT_NUM
+   popa
    
    ret 
 endp BORRARBLOQUE     
@@ -718,9 +666,9 @@ RESET:
    mov dl, 32
    int 21h
    
-   mov dl,x2
+   mov dl,posbolax
    mov x,dl
-   mov dh,y2
+   mov dh,posbolay
    mov y,dh     
    mov ah,02h
    int 10h
@@ -729,10 +677,12 @@ RESET:
    mov dl, caracter
    int 21h
    
-   mov  ah,00h
-   int  16h
+   mov bl,posbarx2
+   mov posbarx,bl 
    
-   jmp MOVERUP2
+   
+   
+   jmp IMPRIMIRBARRA
    
 
 GAMEOVER:
