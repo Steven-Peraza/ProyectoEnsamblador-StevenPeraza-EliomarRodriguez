@@ -5,17 +5,18 @@ stacksg ends
 ;---------------------------------
 datasg segment 'data'
     textoNom   DB "Digite su nombre o apodo.",10,13, "$" 
+    textoVid   DB 10,13,"Digite la cantidad de vidas que desea tener (Un numero del 1 al 9, 3 por Defecto).",10,13, "$"
     textoCar   DB 10,13,"Digite el caracter que desea observar.",10,13, "$"
     textoJug   DB 10,13,"Jugador: ","$"
     textoVidas DB 9,9,"Vidas: ","$"
     textoScore DB 9,9,"Score: ","$"                                   
     textoGO    DB "Game Over! Su puntuacion fue de: ","$"
-    textoDif   DB 10,13, "Digite la dificultad en la que desea jugar (Facil por Default).","$"
+    textoDif   DB 10,13, "Digite la dificultad en la que desea jugar (Facil por Defecto).","$"
     textEasy   DB 10,13, "1. Facil","$"
     textMed    DB 10,13, "2. Medio","$"
     textHard   DB 10,13, "3. Dificil",10,13,"$"
     difi       DB 0
-    lifes      DB 3,"$"
+    lifes      DB ?,"$"
     score      DW 0,"$"
     nombre DB 10,?,10 dup (?),"$"
     caracter DB 0 
@@ -74,6 +75,74 @@ START:
    mov caracter,al
    
    mov ah, 9      				
+   lea dx, textoVid         				
+   int 21h
+   
+   mov ah,1
+   int 21h
+   
+   cmp al,31h
+   je LIFE1
+   
+   cmp al,32h
+   je LIFE2
+   
+   cmp al,34h
+   je LIFE4
+   
+   cmp al,35h
+   je LIFE5
+   
+   cmp al,36h
+   je LIFE6
+   
+   cmp al,37h
+   je LIFE7
+   
+   cmp al,38h
+   je LIFE8
+   
+   cmp al,39h 
+   je LIFE9 
+      
+   mov lifes,3
+   jmp CONTINUE 
+   
+LIFE1:
+   mov lifes,1
+   jmp CONTINUE
+   
+LIFE2:
+   mov lifes,2
+   jmp CONTINUE
+   
+LIFE4:
+   mov lifes,4
+   jmp CONTINUE
+   
+LIFE5:
+   mov lifes,5
+   jmp CONTINUE
+   
+LIFE6:
+   mov lifes,6
+   jmp CONTINUE
+   
+LIFE7:
+   mov lifes,7
+   jmp CONTINUE
+   
+LIFE8:
+   mov lifes,8
+   jmp CONTINUE
+   
+LIFE9:
+   mov lifes,9
+    
+
+CONTINUE:
+   
+   mov ah, 9      				
    lea dx, textoDif         				
    int 21h
    
@@ -102,15 +171,11 @@ START:
    int 10h 
    
    popa
-   ;xor ax,ax
-   ;xor dx,dx
    
    mov dl,0
    mov dh,0     
    mov ah,02h
    int 10h
-   
-  ; popa
    
    mov ah, 9      				
    lea dx, textoJug         				
@@ -160,9 +225,7 @@ START:
    
    cmp difi,33h
    je HARD
-   
     
-   
 
 EZ:
     
