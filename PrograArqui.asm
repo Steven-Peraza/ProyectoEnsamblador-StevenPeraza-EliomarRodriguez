@@ -15,6 +15,15 @@ datasg segment 'data'
     textEasy   DB 10,13, "1. Facil","$"
     textMed    DB 10,13, "2. Medio","$"
     textHard   DB 10,13, "3. Dificil",10,13,"$"
+    
+    msgTime     DB "Su tiempo fue de: $"
+    msgTime1    DB ":$"
+    
+    minI    DB 0   ; almacenara el minuto de inicio del juego
+    minF    DB 0   ; almacenara el minuto de final del juego
+    segI    DB 0   ; almacenara el segundo de inicio del juego
+    segF    DB 0   ; almacenara el segundo de final del juego
+    
     difi       DB 0     ;var que almacena la dificultad
     lifes      DB ?,"$" ;var que almacena la cantidad de vidas
     score      DW 0,"$"  ;var que almacena la puntuacion
@@ -46,6 +55,7 @@ datasg segment 'data'
     right   equ     4dh
     up      equ     80
     down    equ     72         
+    nombreArchivo db 'c:\ArchivoProyectoArquiArkanoid.txt',0 ; nombre de archivo y debe terminar en 0
     datasg ends
 ;---------------------------------
 codesg segment 'code'  
@@ -334,8 +344,14 @@ IMPRIMIRBARRA:
    dec posbarx ; pos actual del cursor barra
    
    mov  ah,00h    ;se espera a que el usuario ingrese una tecla para empezar a jugar
-   int  16h
+   int  16h 
    
+   pusha
+   mov  ah,2Ch  
+   int  21h     ; obtengo tiempo en minutos y segundos
+   mov  minI,cl  
+   mov  segI,dh  
+   popa
    jmp MOVERUP
    
    
@@ -579,6 +595,33 @@ MOVERUP2:         ; mismo procedimiento, direccion arriba-izquierda
        
    jmp MOVERUP2  ;si nada paso, se sigue subiendo
 
+crearArchivo proc      ; crear el archivo para guardar puntaje
+    mov ax,@data
+    mov ds,ax
+    
+    ;creacion
+    mov ah,3ch
+    mov cx,0
+    mov dx,offset nombreArchivo
+    int 21h
+    
+    mov bx,ax
+    mov ah,3eh ;cierra el archivo
+    int 21h
+    ret
+endp 
+
+mostrarPuntajes proc
+    mov ah,3dh
+    mov al,1h
+    mov dx,offset nombre
+    int 21h
+    
+    
+    
+    mov ah,3eh ;Cierre de archivo
+    int 21h
+    endp
 MOVERDOWN2:        ;mismo procedimiento, direccion abajo-derecha
    mov dl,x
    mov dh,y     
@@ -750,7 +793,23 @@ RESET:
    jmp IMPRIMIRBARRA    ;se imprime la barra en ese lugar y se comienza el juego de nuevo
    
 
-GAMEOVER: ;etiqueta de fin de juego
+GAMEOVER: ;etiqueta de fin de juego  
+   pusha
+   
+   mov  ah,2Ch  
+   int  21h   
+   mov  minF,cl  
+   mov  segF,dh
+   
+   sub cl, minI
+   mov minF,cl   ; calculo tiempo de juego
+   
+   sub dh, segI
+   mov segF,dh
+   
+   popa
+
+
    pusha 
    mov ax,0600h   
    mov bh,0fh      ;se limpia la pantalla
@@ -771,6 +830,30 @@ GAMEOVER: ;etiqueta de fin de juego
    xor ax,ax       
    mov al,score
    call PRINT_NUM    ;se imprime la puntuacion
+
+   ;;mov ax,02h
+   ;int 21h 
+   
+   mov dl,22    ; columna
+   mov dh,11    ;se coloca el cursor en la posicion (11,13) 
+   mov ah,02h
+   int 10h
+   
+   mov ah, 9      				
+   lea dx, msgTime   ;se imprime el mensaje "su puntaje es de"      				
+   int 21h 
+   
+   xor ax,ax       
+   mov al,minF
+   call PRINT_NUM    ;se imprimen los minutos de juego 
+   
+   mov ah, 9      				
+   lea dx, msgTime1   ;se imprime el mensaje ":"      				
+   int 21h 
+   
+   xor ax,ax       
+   mov al,segF
+   call PRINT_NUM    ;se imprimen los segundos de juego
 
    mov ax,02h
    int 21h
